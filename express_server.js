@@ -22,7 +22,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-app.get("/urls:id", (req, res) => {
+app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id.slice(1);
   const longURL = urlDatabase[shortURL];
   const templateVars = { id: shortURL, longURL: longURL };
