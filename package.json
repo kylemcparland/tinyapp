@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/kylemcparland/tinyapp/issues"
   },
-  "homepage": "https://github.com/kylemcparland/tinyapp#readme"
+  "homepage": "https://github.com/kylemcparland/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
 }
