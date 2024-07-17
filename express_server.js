@@ -6,6 +6,27 @@ app.use(express.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
 
+const generateRandomString = function() {
+  let randomString = "";
+  const strLibrary =
+    [
+      "a", "b", "c", "d", "e", "f", "g",
+      "h", "i", "j", "k", "l", "m", "n",
+      "o", "p", "q", "r", "s", "t", "u",
+      "v", "w", "x", "y", "z", "1", "2",
+      "3", "4", "5", "6", "7", "8", "9",
+      "!", "@", "#", "$", "%", "&", "*"
+    ];
+
+  while (randomString.length < 10) {
+    let letter = Math.floor(Math.random() * (41 - 0) + 0);
+    randomString = randomString + strLibrary[letter];
+  }
+
+  return randomString;
+};
+
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
