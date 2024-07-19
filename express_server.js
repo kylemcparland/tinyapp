@@ -94,6 +94,13 @@ if (urlDatabase[shortURL]) {
 
 });
 
+// DELETE FROM DATABASE:
+app.post("/urls/:id/delete", (req, res) => {
+  const shortURL = req.params.id;
+  delete urlDatabase[shortURL];
+  res.redirect(302, "/urls/");
+})
+
 // JSON API REQUEST:
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
