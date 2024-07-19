@@ -51,6 +51,12 @@ app.post("/login", (req, res) => {
   res.redirect(302, "/urls/");
 })
 
+// LOGOUT:
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect(302, "/urls/")
+})
+
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
   const templateVars = { 
