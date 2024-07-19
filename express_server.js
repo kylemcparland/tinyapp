@@ -95,7 +95,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 // EDIT URL IN DATABASE:
-app.post("/urls/:id/edit", (req, res) => {
+app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const newURL = req.body.newURL;
 
