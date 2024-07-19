@@ -7,18 +7,18 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 // FUNCTION TO CREATE NEW URLS:
-const generateRandomString = function() {
+const generateRandomString = function () {
   let randomString = "";
   const strLibrary =
     [
       "a", "b", "c", "d", "e", "f", "g",
       "h", "i", "j", "k", "l", "m", "n",
       "o", "p", "q", "r", "s", "t", "u",
-      "v", "w", "x", "y", "z", "A", "B", 
-      "C", "D", "E", "F", "G", "H", "I", 
-      "J", "K", "L", "M", "N", "O", "P", 
-      "Q", "R", "S", "T", "U", "V", "W", 
-      "X", "Y", "Z", "1", "2", "3", "4", 
+      "v", "w", "x", "y", "z", "A", "B",
+      "C", "D", "E", "F", "G", "H", "I",
+      "J", "K", "L", "M", "N", "O", "P",
+      "Q", "R", "S", "T", "U", "V", "W",
+      "X", "Y", "Z", "1", "2", "3", "4",
       "5", "6", "7", "8", "9", "0", "!"
     ];
 
@@ -85,14 +85,28 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
 
-if (urlDatabase[shortURL]) {
-  const longURL = urlDatabase[shortURL];
-  res.redirect(302, longURL);
-} else {
-  res.send("URL does not exist within database.")
-}
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[shortURL];
+    res.redirect(302, longURL);
+  } else {
+    res.send("URL does not exist within database.")
+  }
 
 });
+
+// EDIT URL IN DATABASE:
+app.post("/urls/:id/edit", (req, res) => {
+  const shortURL = req.params.id;
+  const newURL = req.body.newURL;
+
+  if (newURL.includes("http://") || newURL.includes("https://")) {
+    urlDatabase[shortURL] = newURL;
+    res.redirect(302, "/urls/");
+  } else {
+    res.send("Invalid URL. Please include 'http://' or 'https://'")
+  }
+
+})
 
 // DELETE FROM DATABASE:
 app.post("/urls/:id/delete", (req, res) => {
