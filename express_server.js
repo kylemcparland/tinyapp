@@ -9,11 +9,22 @@ app.set("view engine", "ejs");
 // FUNCTION TO CREATE NEW URLS:
 const generateRandomString = function() {
   let randomString = "";
+  const strLibrary =
+    [
+      "a", "b", "c", "d", "e", "f", "g",
+      "h", "i", "j", "k", "l", "m", "n",
+      "o", "p", "q", "r", "s", "t", "u",
+      "v", "w", "x", "y", "z", "A", "B", 
+      "C", "D", "E", "F", "G", "H", "I", 
+      "J", "K", "L", "M", "N", "O", "P", 
+      "Q", "R", "S", "T", "U", "V", "W", 
+      "X", "Y", "Z", "1", "2", "3", "4", 
+      "5", "6", "7", "8", "9", "0", "!"
+    ];
 
   while (randomString.length < 6) {
-    const ASCIICharIndex = Math.floor(Math.random() * (122 - 48) + 48);
-    const randomChar = String.fromCharCode(ASCIICharIndex);
-    randomString += randomChar
+    let libraryIndex = Math.floor(Math.random() * 62);
+    randomString += strLibrary[libraryIndex];
   }
 
   return randomString;
@@ -44,7 +55,7 @@ app.post("/urls", (req, res) => {
   if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
     const generatedShortURL = generateRandomString();
     urlDatabase[generatedShortURL] = submittedLongURL;
-    res.redirect(200, "/urls/" + generatedShortURL);
+    res.redirect(302, "/urls/" + generatedShortURL);
   } else {
     res.send("Invalid URL. Please include 'http://' or 'https://'")
   }
@@ -76,7 +87,7 @@ app.get("/u/:id", (req, res) => {
 
 if (urlDatabase[shortURL]) {
   const longURL = urlDatabase[shortURL];
-  res.redirect(308, longURL);
+  res.redirect(302, longURL);
 } else {
   res.send("URL does not exist within database.")
 }
