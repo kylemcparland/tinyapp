@@ -9,23 +9,11 @@ app.set("view engine", "ejs");
 // FUNCTION TO CREATE NEW URLS:
 const generateRandomString = function() {
   let randomString = "";
-  const strLibrary =
-    [
-      "a", "b", "c", "d", "e", "f", "g",
-      "h", "i", "j", "k", "l", "m", "n",
-      "o", "p", "q", "r", "s", "t", "u",
-      "v", "w", "x", "y", "z", "A", "B", 
-      "C", "D", "E", "F", "G", "H", "I", 
-      "J", "K", "L", "M", "N", "O", "P", 
-      "Q", "R", "S", "T", "U", "V", "W", 
-      "X", "Y", "Z", "1", "2", "3", "4", 
-      "5", "6", "7", "8", "9", "0", "!", 
-      "?"
-    ];
 
   while (randomString.length < 6) {
-    let libraryIndex = Math.floor(Math.random() * 63);
-    randomString += strLibrary[libraryIndex];
+    const ASCIICharIndex = Math.floor(Math.random() * (122 - 48) + 48);
+    const randomChar = String.fromCharCode(ASCIICharIndex);
+    randomString += randomChar
   }
 
   return randomString;
@@ -52,10 +40,15 @@ app.get("/urls", (req, res) => {
 app.post("/urls", (req, res) => {
   //handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
   const submittedLongURL = req.body.longURL;
-  const generatedShortURL = generateRandomString();
-  urlDatabase[generatedShortURL] = submittedLongURL;
-  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
-  res.redirect("/urls/" + generatedShortURL);
+
+  if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
+    const generatedShortURL = generateRandomString();
+    urlDatabase[generatedShortURL] = submittedLongURL;
+    res.redirect(200, "/urls/" + generatedShortURL);
+  } else {
+    res.send("Invalid URL. Please include 'http://' or 'https://'")
+  }
+
 });
 
 // URL SUBMIT PAGE:
