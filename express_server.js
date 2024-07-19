@@ -13,19 +13,22 @@ const generateRandomString = function() {
       "a", "b", "c", "d", "e", "f", "g",
       "h", "i", "j", "k", "l", "m", "n",
       "o", "p", "q", "r", "s", "t", "u",
-      "v", "w", "x", "y", "z", "1", "2",
-      "3", "4", "5", "6", "7", "8", "9",
-      "!", "@", "#", "$", "%", "&", "*"
+      "v", "w", "x", "y", "z", "A", "B", 
+      "C", "D", "E", "F", "G", "H", "I", 
+      "J", "K", "L", "M", "N", "O", "P", 
+      "Q", "R", "S", "T", "U", "V", "W", 
+      "X", "Y", "Z", "1", "2", "3", "4", 
+      "5", "6", "7", "8", "9", "0", "!", 
+      "?", "&", "#", "$", "%", "&", "*"
     ];
 
   while (randomString.length < 10) {
-    let letter = Math.floor(Math.random() * (41 - 0) + 0);
-    randomString = randomString + strLibrary[letter];
+    let libraryIndex = Math.floor(Math.random() * 69);
+    randomString += strLibrary[libraryIndex];
   }
 
   return randomString;
 };
-
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -51,7 +54,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const shortURL = req.params.id.slice(1);
+  const shortURL = req.params.id
   const longURL = urlDatabase[shortURL];
   const templateVars = { id: shortURL, longURL: longURL };
   res.render("urls_show", templateVars);
