@@ -67,7 +67,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-// SPECIFIC URL DATABASE PAGE (REDIRECT / LOOKUP):
+// POST-SUBMIT SPECIFIC URL DATABASE PAGE (REDIRECT / LOOKUP):
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
 
