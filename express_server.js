@@ -6,6 +6,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
 
+// FUNCTION TO CREATE NEW URLS:
 const generateRandomString = function() {
   let randomString = "";
   const strLibrary =
@@ -19,51 +20,82 @@ const generateRandomString = function() {
       "Q", "R", "S", "T", "U", "V", "W", 
       "X", "Y", "Z", "1", "2", "3", "4", 
       "5", "6", "7", "8", "9", "0", "!", 
-      "?", "&", "#", "$", "%", "&", "*"
+      "?"
     ];
 
-  while (randomString.length < 10) {
-    let libraryIndex = Math.floor(Math.random() * 69);
+  while (randomString.length < 6) {
+    let libraryIndex = Math.floor(Math.random() * 63);
     randomString += strLibrary[libraryIndex];
   }
 
   return randomString;
 };
 
+// DATABASE OBJECT:
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
 
+// HOMEPAGE:
 app.get("/", (req, res) => {
   res.send("Welcome to the homepage!");
 });
 
+// FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
+// SUBMIT NEW URL:
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  //handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
+  const submittedLongURL = req.body.longURL;
+  const generatedShortURL = generateRandomString();
+  urlDatabase[generatedShortURL] = submittedLongURL;
+  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  res.redirect("/urls/" + generatedShortURL);
 });
 
+// URL SUBMIT PAGE:
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// SPECIFIC URL DATABASE PAGE (REDIRECT / LOOKUP):
 app.get("/urls/:id", (req, res) => {
-  const shortURL = req.params.id
-  const longURL = urlDatabase[shortURL];
-  const templateVars = { id: shortURL, longURL: longURL };
-  res.render("urls_show", templateVars);
+  const shortURL = req.params.id;
+
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[shortURL];
+    const templateVars = { id: shortURL, longURL: longURL };
+    res.render("urls_show", templateVars);
+  } else {
+    res.send("URL does not exist within database.")
+  }
+
 });
 
+// REDIRECT TO URL USING SHORT URL:
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id;
+
+if (urlDatabase[shortURL]) {
+  const longURL = urlDatabase[shortURL];
+  res.redirect(308, longURL);
+} else {
+  res.send("URL does not exist within database.")
+}
+
+});
+
+// JSON API REQUEST:
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// START SERVER:
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
@@ -71,3 +103,8 @@ app.listen(PORT, () => {
 // app.get("/hello", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 // });
+
+
+// Edge cases:
+//localhost:8080/urls/RANDOMSTRING => Shouldn't bring up a urls page
+//localhost:8080/u/RANDOMSTRING => Shouldn't throw an error, it should return info
