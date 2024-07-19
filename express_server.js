@@ -133,3 +133,6 @@ app.listen(PORT, () => {
 // Edge cases:
 //localhost:8080/urls/RANDOMSTRING => Shouldn't bring up a urls page
 //localhost:8080/u/RANDOMSTRING => Shouldn't throw an error, it should return info
+
+//Feedback suggestions:
+//Refactor generateRandomString to store characters in a string instead of an array
