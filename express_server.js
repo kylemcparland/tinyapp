@@ -41,6 +41,13 @@ app.get("/", (req, res) => {
   res.send("Welcome to the homepage!");
 });
 
+// LOGIN:
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie("username", username);
+  res.redirect(302, "/urls/");
+})
+
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
