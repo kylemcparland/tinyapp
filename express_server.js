@@ -56,11 +56,15 @@ app.get("/", (req, res) => {
 // REGISTER PAGE:
 app.get("/register", (req, res) => {
   const currentUser = req.cookies.user_id;
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[currentUser]
-  };
-  res.render("register", templateVars);
+  if (!currentUser) {
+    const templateVars = {
+      urls: urlDatabase,
+      user: users[currentUser]
+    };
+    res.render("register", templateVars);
+  } else {
+    res.redirect(302, "/urls/");
+  }
 });
 
 // REGISTER POST:
@@ -95,11 +99,15 @@ app.post("/register", (req, res) => {
 // LOGIN PAGE:
 app.get("/login", (req, res) => {
   const currentUser = req.cookies.user_id;
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[currentUser]
-  };
-  res.render("login", templateVars);
+  if (!currentUser) {
+    const templateVars = {
+      urls: urlDatabase,
+      user: users[currentUser]
+    };
+    res.render("login", templateVars);
+  } else {
+    res.redirect(302, "/urls/");
+  }
 });
 
 // LOGIN:
@@ -138,14 +146,22 @@ app.get("/urls", (req, res) => {
 
 // SUBMIT NEW URL:
 app.post("/urls", (req, res) => {
-  const submittedLongURL = req.body.longURL;
+  const currentUser = req.cookies.user_id;
+  
+  if (currentUser) {
+    const submittedLongURL = req.body.longURL;
 
-  if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
-    const generatedShortURL = generateRandomString();
-    urlDatabase[generatedShortURL] = submittedLongURL;
-    res.redirect(302, "/urls/" + generatedShortURL);
+    if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
+      const generatedShortURL = generateRandomString();
+      urlDatabase[generatedShortURL] = submittedLongURL;
+      res.redirect(302, "/urls/" + generatedShortURL);
+    } else {
+      res.send("Invalid URL. Please include 'http://' or 'https://'");
+    }
+
   } else {
-    res.send("Invalid URL. Please include 'http://' or 'https://'");
+    console.log(urlDatabase);
+    res.status(401).send("Only registered users can shorten URLs.");
   }
 
 });
@@ -153,12 +169,15 @@ app.post("/urls", (req, res) => {
 // URL SUBMIT PAGE:
 app.get("/urls/new", (req, res) => {
   const currentUser = req.cookies.user_id;
-
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[currentUser]
-  };
-  res.render("urls_new", templateVars);
+  if (currentUser) {
+    const templateVars = {
+      urls: urlDatabase,
+      user: users[currentUser]
+    };
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect(302, "/login");
+  }
 });
 
 // POST-SUBMIT SPECIFIC URL DATABASE PAGE (REDIRECT / get):
@@ -189,7 +208,7 @@ app.get("/u/:id", (req, res) => {
     const longURL = urlDatabase[shortURL];
     res.redirect(302, longURL);
   } else {
-    res.send("URL does not exist within database.");
+    res.status(401).send("URL does not exist within database.");
   }
 
 });
