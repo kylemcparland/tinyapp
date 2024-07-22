@@ -60,6 +60,16 @@ const urlsForUser = function(id) {
   return userDatabase;
 }
 
+// FUNCTION CHECK IF SHORT URL EXISTS:
+const checkDatabaseForURL = function(url) {
+  for (const currentURL in urlDatabase) {
+    if (currentURL === url) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // HOMEPAGE:
 app.get("/", (req, res) => {
   res.send("Welcome to the homepage!");
@@ -201,22 +211,39 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-// VIEW URL-SPECIFIC EDIT PAGE:
+// VIEW URL-SPECIFIC PAGE:
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  const currentUser = req.cookies.user_id;
-
-  if (urlDatabase[shortURL]) {
-    const longURL = urlDatabase[shortURL].longURL;
-    const templateVars = {
-      id: shortURL,
-      longURL: longURL,
-      urls: urlDatabase,
-      user: users[currentUser]
-    };
-    res.render("urls_show", templateVars);
+  
+  if (!checkDatabaseForURL(shortURL)) {
+    res.status(404).send("URL does not exist within database.");
   } else {
-    res.send("URL does not exist within database.");
+
+    const currentUser = req.cookies.user_id;
+    const matchingUser = urlDatabase[shortURL].userID;
+
+    if (matchingUser === currentUser) {
+
+      if (urlDatabase[shortURL]) {
+        const longURL = urlDatabase[shortURL].longURL;
+        const templateVars = {
+          id: shortURL,
+          longURL: longURL,
+          urls: urlDatabase,
+          user: users[currentUser]
+        };
+        res.render("urls_show", templateVars);
+      } else {
+        res.send("URL does not exist within database.");
+        // redundant
+      }
+  
+    } else if (currentUser) {
+      res.status(401).send("Current user cannot access this page.");
+    } else {
+      res.status(401).send("Please login before attempting to access this page.");
+    }
+
   }
 
 });
@@ -237,13 +264,28 @@ app.get("/u/:id", (req, res) => {
 // EDIT URL IN DATABASE:
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  const newURL = req.body.newURL;
 
-  if (newURL.includes("http://") || newURL.includes("https://")) {
-    urlDatabase[shortURL].longURL = newURL;
-    res.redirect(302, "/urls/");
+  if (!checkDatabaseForURL(shortURL)) {
+    res.status(404).send("URL does not exist within database.");
   } else {
-    res.send("Invalid URL. Please include 'http://' or 'https://'");
+
+    const newURL = req.body.newURL;
+    const currentUser = req.cookies.user_id;
+    const matchingUser = urlDatabase[shortURL].userID;
+  
+    if (matchingUser === currentUser) {
+      if (newURL.includes("http://") || newURL.includes("https://")) {
+        urlDatabase[shortURL].longURL = newURL;
+        res.redirect(302, "/urls/");
+      } else {
+        res.send("Invalid URL. Please include 'http://' or 'https://'");
+      }
+    } else if (currentUser) {
+      res.status(401).send("Current user cannot access this page.");
+    } else {
+      res.status(401).send("Please login before attempting to access this page.");
+    }
+
   }
 
 });
@@ -251,8 +293,24 @@ app.post("/urls/:id", (req, res) => {
 // DELETE FROM DATABASE:
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
-  delete urlDatabase[shortURL];
-  res.redirect(302, "/urls/");
+
+  if (!checkDatabaseForURL(shortURL)) {
+    res.status(404).send("URL does not exist within database.");
+  } else {
+
+    const currentUser = req.cookies.user_id;
+    const matchingUser = urlDatabase[shortURL].userID;
+
+    if (matchingUser === currentUser) {
+      delete urlDatabase[shortURL];
+      res.redirect(302, "/urls/");
+    } else if (currentUser) {
+      res.status(401).send("Current user cannot perform this action.");
+    } else {
+      res.status(401).send("Please login before attempting to perform this action.");
+    }
+  }
+
 });
 
 // JSON API REQUEST:
