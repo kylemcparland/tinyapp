@@ -43,6 +43,21 @@ app.get("/", (req, res) => {
   res.send("Welcome to the homepage!");
 });
 
+// REGISTER PAGE:
+app.get("/register", (req, res) => {
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"] 
+  };
+  res.render("register", templateVars);
+})
+
+// REGISTER POST:
+app.post("/register", (req, res) => {
+  console.log(req.body);
+  // req.body = { email: 'kyle@yahoo.ca', password: '123' }
+})
+
 // LOGIN:
 app.post("/login", (req, res) => {
   // edge case: handle empty username field
