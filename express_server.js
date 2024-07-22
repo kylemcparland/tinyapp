@@ -25,7 +25,7 @@ const generateRandomString = function () {
     ];
 
   while (randomString.length < 6) {
-    let libraryIndex = Math.floor(Math.random() * 62);
+    const libraryIndex = Math.floor(Math.random() * 62);
     randomString += strLibrary[libraryIndex];
   }
 
