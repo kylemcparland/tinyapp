@@ -48,6 +48,18 @@ const getEmailinDatabase = function(email) {
   return null;
 };
 
+// FUNCTION FOR PARSE URL DATABASE BY USER:
+const urlsForUser = function(id) {
+  let userDatabase = {};
+  for (const url in urlDatabase) {
+    const currentUserID = urlDatabase[url].userID;
+    if (currentUserID === id) {
+      userDatabase[url] = urlDatabase[url].longURL;
+    }
+  }
+  return userDatabase;
+}
+
 // HOMEPAGE:
 app.get("/", (req, res) => {
   res.send("Welcome to the homepage!");
@@ -137,11 +149,16 @@ app.post("/logout", (req, res) => {
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
   const currentUser = req.cookies.user_id;
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[currentUser]
-  };
-  res.render("urls_index", templateVars);
+  const userDatabase = urlsForUser(currentUser);
+  if (currentUser) {
+    const templateVars = {
+      urls: userDatabase,
+      user: users[currentUser]
+    };
+    res.render("urls_index", templateVars);
+  } else {
+    res.status(401).send("You must login before accessing this page.");
+  }
 });
 
 // SUBMIT NEW URL:
@@ -153,7 +170,11 @@ app.post("/urls", (req, res) => {
 
     if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
       const generatedShortURL = generateRandomString();
-      urlDatabase[generatedShortURL] = submittedLongURL;
+
+      urlDatabase[generatedShortURL] = {};
+      urlDatabase[generatedShortURL].longURL = submittedLongURL;
+      urlDatabase[generatedShortURL].userID = currentUser;
+
       res.redirect(302, "/urls/" + generatedShortURL);
     } else {
       res.send("Invalid URL. Please include 'http://' or 'https://'");
@@ -180,13 +201,13 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-// POST-SUBMIT SPECIFIC URL DATABASE PAGE (REDIRECT / get):
+// VIEW URL-SPECIFIC EDIT PAGE:
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const currentUser = req.cookies.user_id;
 
   if (urlDatabase[shortURL]) {
-    const longURL = urlDatabase[shortURL];
+    const longURL = urlDatabase[shortURL].longURL;
     const templateVars = {
       id: shortURL,
       longURL: longURL,
@@ -205,7 +226,7 @@ app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
 
   if (urlDatabase[shortURL]) {
-    const longURL = urlDatabase[shortURL];
+    const longURL = urlDatabase[shortURL].longURL;
     res.redirect(302, longURL);
   } else {
     res.status(401).send("URL does not exist within database.");
@@ -219,7 +240,7 @@ app.post("/urls/:id", (req, res) => {
   const newURL = req.body.newURL;
 
   if (newURL.includes("http://") || newURL.includes("https://")) {
-    urlDatabase[shortURL] = newURL;
+    urlDatabase[shortURL].longURL = newURL;
     res.redirect(302, "/urls/");
   } else {
     res.send("Invalid URL. Please include 'http://' or 'https://'");
