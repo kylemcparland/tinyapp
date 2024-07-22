@@ -37,12 +37,12 @@ const generateRandomString = function () {
 };
 
 // FUNCTION TO CHECK FOR EMAIL IN DATABASE:
-const lookupEmailinDatabase = function (email) {
+const getEmailinDatabase = function (email) {
   const newEmail = email.toLowerCase();
   for (const user in users) {
     const userEmail = users[user].email.toLowerCase();
     if (userEmail === newEmail) {
-      return user;
+      return users[user];
     }
   }
   return null;
@@ -74,7 +74,7 @@ app.post("/register", (req, res) => {
     res.status(400).send("Password field is blank.")
   } else {
 
-    if (lookupEmailinDatabase(emailInput)) {
+    if (getEmailinDatabase(emailInput)) {
       res.status(400).send("Email already exists in database.")
     } else {
       const assignUserID = generateRandomString();
@@ -94,7 +94,7 @@ app.post("/register", (req, res) => {
 
 })
 
-// NEW GET LOGIN:
+// LOGIN PAGE:
 app.get("/login", (req, res) => {
   const currentUser = req.cookies.user_id;
   const templateVars = { 
@@ -106,16 +106,26 @@ app.get("/login", (req, res) => {
 
 // LOGIN:
 app.post("/login", (req, res) => {
-  // edge case: handle empty username field
-  const username = req.body.username;
-  res.cookie("username", username);
-  res.redirect(302, "/urls/");
+  const emailInput = req.body.email;
+  const passwordInput = req.body.password;
+  const checkForUser = getEmailinDatabase(emailInput);
+
+  if (!checkForUser) {
+    res.status(403).send("Email does not exist in database.")
+  } else if (passwordInput !== checkForUser.password) {
+    res.status(403).send("Incorrect password for this account.")
+  } else {
+
+    res.cookie("user_id", checkForUser.id);
+    res.redirect(302, "/urls/")
+  }
+
 })
 
 // LOGOUT:
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect(302, "/urls/")
+  res.clearCookie("user_id");
+  res.redirect(302, "/login")
 })
 
 // FULL URLS DATABASE PAGE:
@@ -154,7 +164,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-// POST-SUBMIT SPECIFIC URL DATABASE PAGE (REDIRECT / LOOKUP):
+// POST-SUBMIT SPECIFIC URL DATABASE PAGE (REDIRECT / get):
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const currentUser = req.cookies.user_id;
