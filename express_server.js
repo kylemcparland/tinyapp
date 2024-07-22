@@ -13,7 +13,7 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 // FUNCTION TO CREATE NEW URLS:
-const generateRandomString = function () {
+const generateRandomString = function() {
   let randomString = "";
   const strLibrary =
     [
@@ -37,7 +37,7 @@ const generateRandomString = function () {
 };
 
 // FUNCTION TO CHECK FOR EMAIL IN DATABASE:
-const getEmailinDatabase = function (email) {
+const getEmailinDatabase = function(email) {
   const newEmail = email.toLowerCase();
   for (const user in users) {
     const userEmail = users[user].email.toLowerCase();
@@ -46,7 +46,7 @@ const getEmailinDatabase = function (email) {
     }
   }
   return null;
-}
+};
 
 // HOMEPAGE:
 app.get("/", (req, res) => {
@@ -56,12 +56,12 @@ app.get("/", (req, res) => {
 // REGISTER PAGE:
 app.get("/register", (req, res) => {
   const currentUser = req.cookies.user_id;
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
     user: users[currentUser]
   };
   res.render("register", templateVars);
-})
+});
 
 // REGISTER POST:
 app.post("/register", (req, res) => {
@@ -69,16 +69,16 @@ app.post("/register", (req, res) => {
   const passwordInput = req.body.password;
 
   if (!emailInput) {
-    res.status(400).send("Email address field is blank.")
+    res.status(400).send("Email address field is blank.");
   } else if (!passwordInput) {
-    res.status(400).send("Password field is blank.")
+    res.status(400).send("Password field is blank.");
   } else {
 
     if (getEmailinDatabase(emailInput)) {
-      res.status(400).send("Email already exists in database.")
+      res.status(400).send("Email already exists in database.");
     } else {
       const assignUserID = generateRandomString();
-      users[assignUserID] = {}
+      users[assignUserID] = {};
     
       users[assignUserID].id = assignUserID;
       users[assignUserID].email = emailInput;
@@ -86,23 +86,21 @@ app.post("/register", (req, res) => {
     
       res.cookie("user_id", assignUserID);
     
-      res.redirect(302, "/urls/")
-      // req.body = { email: 'kyle@yahoo.ca', password: '123' }
+      res.redirect(302, "/urls/");
     }
     
   }
-
-})
+});
 
 // LOGIN PAGE:
 app.get("/login", (req, res) => {
   const currentUser = req.cookies.user_id;
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
     user: users[currentUser]
   };
   res.render("login", templateVars);
-})
+});
 
 // LOGIN:
 app.post("/login", (req, res) => {
@@ -111,27 +109,27 @@ app.post("/login", (req, res) => {
   const checkForUser = getEmailinDatabase(emailInput);
 
   if (!checkForUser) {
-    res.status(403).send("Email does not exist in database.")
+    res.status(403).send("Email does not exist in database.");
   } else if (passwordInput !== checkForUser.password) {
-    res.status(403).send("Incorrect password for this account.")
+    res.status(403).send("Incorrect password for this account.");
   } else {
 
     res.cookie("user_id", checkForUser.id);
-    res.redirect(302, "/urls/")
+    res.redirect(302, "/urls/");
   }
 
-})
+});
 
 // LOGOUT:
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect(302, "/login")
-})
+  res.redirect(302, "/login");
+});
 
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
   const currentUser = req.cookies.user_id;
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
     user: users[currentUser]
   };
@@ -140,7 +138,6 @@ app.get("/urls", (req, res) => {
 
 // SUBMIT NEW URL:
 app.post("/urls", (req, res) => {
-  //handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
   const submittedLongURL = req.body.longURL;
 
   if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
@@ -148,7 +145,7 @@ app.post("/urls", (req, res) => {
     urlDatabase[generatedShortURL] = submittedLongURL;
     res.redirect(302, "/urls/" + generatedShortURL);
   } else {
-    res.send("Invalid URL. Please include 'http://' or 'https://'")
+    res.send("Invalid URL. Please include 'http://' or 'https://'");
   }
 
 });
@@ -157,7 +154,7 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const currentUser = req.cookies.user_id;
 
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
     user: users[currentUser]
   };
@@ -171,15 +168,15 @@ app.get("/urls/:id", (req, res) => {
 
   if (urlDatabase[shortURL]) {
     const longURL = urlDatabase[shortURL];
-    const templateVars = { 
-      id: shortURL, 
+    const templateVars = {
+      id: shortURL,
       longURL: longURL,
       urls: urlDatabase,
       user: users[currentUser]
     };
     res.render("urls_show", templateVars);
   } else {
-    res.send("URL does not exist within database.")
+    res.send("URL does not exist within database.");
   }
 
 });
@@ -192,7 +189,7 @@ app.get("/u/:id", (req, res) => {
     const longURL = urlDatabase[shortURL];
     res.redirect(302, longURL);
   } else {
-    res.send("URL does not exist within database.")
+    res.send("URL does not exist within database.");
   }
 
 });
@@ -206,17 +203,17 @@ app.post("/urls/:id", (req, res) => {
     urlDatabase[shortURL] = newURL;
     res.redirect(302, "/urls/");
   } else {
-    res.send("Invalid URL. Please include 'http://' or 'https://'")
+    res.send("Invalid URL. Please include 'http://' or 'https://'");
   }
 
-})
+});
 
 // DELETE FROM DATABASE:
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
   delete urlDatabase[shortURL];
   res.redirect(302, "/urls/");
-})
+});
 
 // JSON API REQUEST:
 app.get("/urls.json", (req, res) => {
@@ -227,6 +224,7 @@ app.get("/urls.json", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
 
 // app.get("/hello", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
@@ -239,3 +237,7 @@ app.listen(PORT, () => {
 
 //Feedback suggestions:
 //Refactor generateRandomString to store characters in a string instead of an array
+
+//handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
+
+// convert email to lowercase on registration
