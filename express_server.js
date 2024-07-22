@@ -1,3 +1,7 @@
+const database = require("./database");
+const users = database.users;
+const urlDatabase = database.urlDatabase;
+
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const app = express();
@@ -32,12 +36,6 @@ const generateRandomString = function () {
   return randomString;
 };
 
-// DATABASE OBJECT:
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-};
-
 // HOMEPAGE:
 app.get("/", (req, res) => {
   res.send("Welcome to the homepage!");
@@ -45,16 +43,28 @@ app.get("/", (req, res) => {
 
 // REGISTER PAGE:
 app.get("/register", (req, res) => {
+  const currentUser = req.cookies.user_id;
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"] 
+    user: users[currentUser]
   };
   res.render("register", templateVars);
 })
 
 // REGISTER POST:
 app.post("/register", (req, res) => {
-  console.log(req.body);
+  const emailInput = req.body.email;
+  const passwordInput = req.body.password;
+  const assignUserID = generateRandomString();
+  users[assignUserID] = {}
+
+  users[assignUserID].id = assignUserID;
+  users[assignUserID].email = emailInput;
+  users[assignUserID].password = passwordInput;
+
+  res.cookie("user_id", assignUserID);
+
+  res.redirect(302, "/urls/")
   // req.body = { email: 'kyle@yahoo.ca', password: '123' }
 })
 
@@ -74,9 +84,10 @@ app.post("/logout", (req, res) => {
 
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
+  const currentUser = req.cookies.user_id;
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"] 
+    user: users[currentUser]
   };
   res.render("urls_index", templateVars);
 });
@@ -98,9 +109,11 @@ app.post("/urls", (req, res) => {
 
 // URL SUBMIT PAGE:
 app.get("/urls/new", (req, res) => {
+  const currentUser = req.cookies.user_id;
+
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"] 
+    user: users[currentUser]
   };
   res.render("urls_new", templateVars);
 });
@@ -108,6 +121,7 @@ app.get("/urls/new", (req, res) => {
 // POST-SUBMIT SPECIFIC URL DATABASE PAGE (REDIRECT / LOOKUP):
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
+  const currentUser = req.cookies.user_id;
 
   if (urlDatabase[shortURL]) {
     const longURL = urlDatabase[shortURL];
@@ -115,7 +129,7 @@ app.get("/urls/:id", (req, res) => {
       id: shortURL, 
       longURL: longURL,
       urls: urlDatabase,
-      username: req.cookies["username"] 
+      user: users[currentUser]
     };
     res.render("urls_show", templateVars);
   } else {
