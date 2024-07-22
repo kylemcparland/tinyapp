@@ -36,6 +36,17 @@ const generateRandomString = function () {
   return randomString;
 };
 
+const lookupEmailinDatabase = function (email) {
+  const newEmail = email.toLowerCase();
+  for (const user in users) {
+    const userEmail = users[user].email.toLowerCase();
+    if (userEmail === newEmail) {
+      return user;
+    }
+  }
+  return null;
+}
+
 // HOMEPAGE:
 app.get("/", (req, res) => {
   res.send("Welcome to the homepage!");
@@ -55,17 +66,33 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const emailInput = req.body.email;
   const passwordInput = req.body.password;
-  const assignUserID = generateRandomString();
-  users[assignUserID] = {}
 
-  users[assignUserID].id = assignUserID;
-  users[assignUserID].email = emailInput;
-  users[assignUserID].password = passwordInput;
+  if (!emailInput) {
+    res.status(400).send("Email address field is blank.")
+  } else if (!passwordInput) {
+    res.status(400).send("Password field is blank.")
+  } else {
 
-  res.cookie("user_id", assignUserID);
+    if (lookupEmailinDatabase(emailInput)) {
+      res.status(400).send("Email already exists in database.")
+    } else {
+      const assignUserID = generateRandomString();
+      users[assignUserID] = {}
+    
+      users[assignUserID].id = assignUserID;
+      users[assignUserID].email = emailInput;
+      users[assignUserID].password = passwordInput;
+    
+      res.cookie("user_id", assignUserID);
+    
+      res.redirect(302, "/urls/")
+      // req.body = { email: 'kyle@yahoo.ca', password: '123' }
+    }
+    
+  }
 
-  res.redirect(302, "/urls/")
-  // req.body = { email: 'kyle@yahoo.ca', password: '123' }
+  
+
 })
 
 // LOGIN:
