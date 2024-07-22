@@ -24,19 +24,12 @@
         <button type="submit" class="btn btn-primary">Logout</button>
         </form>
       <% } else { %>
-        <form class="form-inline ml-auto" method="POST" action="/login">
-          <div class="form-group mb-2">
-            <input
-              class="form-control"
-              type="text"
-              name="username"
-              placeholder="Username"
-              style="width: 300px; margin: auto"
-            />
-            <button type="submit" class="btn btn-primary">Login</button>
-          </form>
-          </div>
+        <form class="form-inline ml-auto" method="GET" action="/register">
+            <button type="submit" class="btn btn-primary">Register</button>
         </form>
+        <form class="form-inline ml-auto" method="GET" action="/login">
+          <button type="submit" class="btn btn-primary">Login</button>
+      </form>
         <% } %>
 
 

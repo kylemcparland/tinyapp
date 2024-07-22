@@ -36,6 +36,7 @@ const generateRandomString = function () {
   return randomString;
 };
 
+// FUNCTION TO CHECK FOR EMAIL IN DATABASE:
 const lookupEmailinDatabase = function (email) {
   const newEmail = email.toLowerCase();
   for (const user in users) {
@@ -91,8 +92,16 @@ app.post("/register", (req, res) => {
     
   }
 
-  
+})
 
+// NEW GET LOGIN:
+app.get("/login", (req, res) => {
+  const currentUser = req.cookies.user_id;
+  const templateVars = { 
+    urls: urlDatabase,
+    user: users[currentUser]
+  };
+  res.render("login", templateVars);
 })
 
 // LOGIN:
