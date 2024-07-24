@@ -22,7 +22,8 @@
     "bcryptjs": "^2.4.3",
     "cookie-session": "^2.1.0",
     "ejs": "^3.1.10",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "method-override": "^3.0.0"
   },
   "devDependencies": {
     "chai": "^4.3.1",

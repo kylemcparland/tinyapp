@@ -6,6 +6,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const cookieSession = require("cookie-session");
 const app = express();
+const methodOverride = require("method-override");
 const PORT = 8080; // default port 8080
 
 const helpers = require("./helpers");
@@ -15,6 +16,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ["superSecretKey"]
 }));
+app.use(methodOverride('_method'));
 
 app.set("view engine", "ejs");
 
@@ -244,7 +246,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 // EDIT URL IN DATABASE:
-app.post("/urls/:id", (req, res) => {
+app.put("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
 
   if (!checkDatabaseForURL(shortURL)) {
@@ -273,8 +275,9 @@ app.post("/urls/:id", (req, res) => {
 });
 
 // DELETE FROM DATABASE:
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
+  console.log(shortURL);
 
   if (!checkDatabaseForURL(shortURL)) {
     res.status(404).send("URL does not exist within database.");
