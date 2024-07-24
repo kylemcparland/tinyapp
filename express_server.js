@@ -8,6 +8,8 @@ const cookieSession = require("cookie-session");
 const app = express();
 const PORT = 8080; // default port 8080
 
+const getUserByEmail = require("./helpers");
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
@@ -40,17 +42,7 @@ const generateRandomString = function() {
   return randomString;
 };
 
-// FUNCTION TO CHECK FOR EMAIL IN DATABASE:
-const getEmailinDatabase = function(email) {
-  const newEmail = email.toLowerCase();
-  for (const user in users) {
-    const userEmail = users[user].email.toLowerCase();
-    if (userEmail === newEmail) {
-      return users[user];
-    }
-  }
-  return null;
-};
+
 
 // FUNCTION FOR PARSE URL DATABASE BY USER:
 const urlsForUser = function(id) {
@@ -104,7 +96,7 @@ app.post("/register", (req, res) => {
     res.status(400).send("Password field is blank.");
   } else {
 
-    if (getEmailinDatabase(emailInput)) {
+    if (getUserByEmail(emailInput, users)) {
       res.status(400).send("Email already exists in database.");
     } else {
       const hashedPassword = bcrypt.hashSync(passwordInput, 10);
@@ -141,7 +133,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const emailInput = req.body.email;
   const passwordInput = req.body.password;
-  const checkForUser = getEmailinDatabase(emailInput);
+  const checkForUser = getUserByEmail(emailInput, users);
 
   if (!checkForUser) {
     res.status(403).send("Email does not exist in database.");
@@ -363,3 +355,7 @@ app.listen(PORT, () => {
 // {heading: req.body[value] || req.body.en}
 
 //on server restart, if a browser has a cookie from a previous iteration of the server, none of the links work
+
+//strLibrary by using the charCodeAt
+//For example, in your /register route, you could check to see if the email and password fields are not only present, 
+//but also meet certain criteria (e.g., the email is in a valid format, the password is a certain length, etc.).
