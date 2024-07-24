@@ -9,7 +9,7 @@ const app = express();
 const methodOverride = require("method-override");
 const PORT = 8080; // default port 8080
 
-const helpers = require("./helpers");
+const { generateRandomString, checkDatabaseForURL, getUserByEmail, urlsForUser } = require("./helpers");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
@@ -20,39 +20,6 @@ app.use(methodOverride('_method'));
 
 app.set("view engine", "ejs");
 
-// FUNCTION TO CREATE NEW URLS:
-const generateRandomString = function () {
-  let randomString = "";
-  const strLibrary =
-    [
-      "a", "b", "c", "d", "e", "f", "g",
-      "h", "i", "j", "k", "l", "m", "n",
-      "o", "p", "q", "r", "s", "t", "u",
-      "v", "w", "x", "y", "z", "A", "B",
-      "C", "D", "E", "F", "G", "H", "I",
-      "J", "K", "L", "M", "N", "O", "P",
-      "Q", "R", "S", "T", "U", "V", "W",
-      "X", "Y", "Z", "1", "2", "3", "4",
-      "5", "6", "7", "8", "9", "0", "!"
-    ];
-
-  while (randomString.length < 6) {
-    const libraryIndex = Math.floor(Math.random() * 62);
-    randomString += strLibrary[libraryIndex];
-  }
-
-  return randomString;
-};
-
-// FUNCTION CHECK IF SHORT URL EXISTS:
-const checkDatabaseForURL = function (url) {
-  for (const currentURL in urlDatabase) {
-    if (currentURL === url) {
-      return true;
-    }
-  }
-  return false;
-}
 
 // HOMEPAGE:
 app.get("/", (req, res) => {
@@ -84,19 +51,19 @@ app.post("/register", (req, res) => {
     res.status(400).send("Password field is blank.");
   } else {
 
-    if (helpers.getUserByEmail(emailInput, users)) {
+    if (getUserByEmail(emailInput, users)) {
       res.status(400).send("Email already exists in database.");
     } else {
       const hashedPassword = bcrypt.hashSync(passwordInput, 10);
-      const assignUserID = generateRandomString();
+      const assignUserID = generateRandomString(6);
       users[assignUserID] = {};
 
       users[assignUserID].id = assignUserID;
-      users[assignUserID].email = emailInput;
+      users[assignUserID].email = emailInput.toLowerCase();
       users[assignUserID].password = hashedPassword;
 
       req.session.user_id = assignUserID;
-
+      console.log(users);
       res.redirect(302, "/urls/");
     }
 
@@ -121,7 +88,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const emailInput = req.body.email;
   const passwordInput = req.body.password;
-  const checkForUser = helpers.getUserByEmail(emailInput, users);
+  const checkForUser = getUserByEmail(emailInput, users);
 
   if (!checkForUser) {
     res.status(403).send("Email does not exist in database.");
@@ -144,7 +111,7 @@ app.post("/logout", (req, res) => {
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
   const currentUser = req.session.user_id;
-  const userDatabase = helpers.urlsForUser(currentUser, urlDatabase);
+  const userDatabase = urlsForUser(currentUser, urlDatabase);
   if (currentUser) {
     const templateVars = {
       urls: userDatabase,
@@ -178,7 +145,7 @@ app.post("/urls", (req, res) => {
     const submittedLongURL = req.body.longURL;
 
     if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
-      const generatedShortURL = generateRandomString();
+      const generatedShortURL = generateRandomString(3);
 
       urlDatabase[generatedShortURL] = {};
       urlDatabase[generatedShortURL].longURL = submittedLongURL;
@@ -201,7 +168,7 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
 
-  if (!checkDatabaseForURL(shortURL)) {
+  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
     res.status(404).send("URL does not exist within database.");
   } else {
 
@@ -247,7 +214,7 @@ app.get("/u/:id", (req, res) => {
     // Assign unique visitor_id if none already assigned:
     let visitorID = req.session.visitor_id;
     if (!visitorID) {
-      req.session.visitor_id = generateRandomString();
+      req.session.visitor_id = generateRandomString(6);
       visitorID = req.session.visitor_id;
     }
 
@@ -273,7 +240,7 @@ app.get("/u/:id", (req, res) => {
 app.put("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
 
-  if (!checkDatabaseForURL(shortURL)) {
+  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
     res.status(404).send("URL does not exist within database.");
   } else {
 
@@ -302,7 +269,7 @@ app.put("/urls/:id", (req, res) => {
 app.delete("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
 
-  if (!checkDatabaseForURL(shortURL)) {
+  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
     res.status(404).send("URL does not exist within database.");
   } else {
 
@@ -341,17 +308,10 @@ app.listen(PORT, () => {
 //localhost:8080/urls/RANDOMSTRING => Shouldn't bring up a urls page
 //localhost:8080/u/RANDOMSTRING => Shouldn't throw an error, it should return info
 
-//Feedback suggestions:
-//Refactor generateRandomString to store characters in a string instead of an array
-
 //handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
-
-// convert email to lowercase on registration
 
 // does generate random string account for existing IDs? 
 // => check for if ID exists before returning
-
-// !tab creates a skeleton on an ejs file
 
 // const {email, password} = req.body;
 // (deconstructing object)
