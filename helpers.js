@@ -1,5 +1,8 @@
 // FUNCTION TO CHECK FOR EMAIL IN DATABASE:
 const getUserByEmail = function(email, database) {
+  if (!email) {
+    return undefined;
+  }
   const newEmail = email.toLowerCase();
   for (const user in database) {
     const userEmail = database[user].email.toLowerCase();
@@ -8,7 +11,9 @@ const getUserByEmail = function(email, database) {
       return foundUser;
     }
   }
-  return null;
+  return undefined;
 };
 
-module.exports = getUserByEmail;
+const helpers = { getUserByEmail };
+
+module.exports = helpers;

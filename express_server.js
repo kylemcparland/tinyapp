@@ -8,7 +8,7 @@ const cookieSession = require("cookie-session");
 const app = express();
 const PORT = 8080; // default port 8080
 
-const getUserByEmail = require("./helpers");
+const helpers = require("./helpers");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
@@ -96,7 +96,7 @@ app.post("/register", (req, res) => {
     res.status(400).send("Password field is blank.");
   } else {
 
-    if (getUserByEmail(emailInput, users)) {
+    if (helpers.getUserByEmail(emailInput, users)) {
       res.status(400).send("Email already exists in database.");
     } else {
       const hashedPassword = bcrypt.hashSync(passwordInput, 10);
@@ -133,7 +133,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const emailInput = req.body.email;
   const passwordInput = req.body.password;
-  const checkForUser = getUserByEmail(emailInput, users);
+  const checkForUser = helpers.getUserByEmail(emailInput, users);
 
   if (!checkForUser) {
     res.status(403).send("Email does not exist in database.");
