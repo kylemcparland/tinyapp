@@ -4,12 +4,15 @@ const urlDatabase = database.urlDatabase;
 
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["superSecretKey"]
+}));
 
 app.set("view engine", "ejs");
 
@@ -78,7 +81,7 @@ app.get("/", (req, res) => {
 
 // REGISTER PAGE:
 app.get("/register", (req, res) => {
-  const currentUser = req.cookies.user_id;
+  const currentUser = req.session.user_id;
   if (!currentUser) {
     const templateVars = {
       urls: urlDatabase,
@@ -112,7 +115,7 @@ app.post("/register", (req, res) => {
       users[assignUserID].email = emailInput;
       users[assignUserID].password = hashedPassword;
     
-      res.cookie("user_id", assignUserID);
+      req.session.user_id = assignUserID;
     
       res.redirect(302, "/urls/");
     }
@@ -122,7 +125,7 @@ app.post("/register", (req, res) => {
 
 // LOGIN PAGE:
 app.get("/login", (req, res) => {
-  const currentUser = req.cookies.user_id;
+  const currentUser = req.session.user_id;
   if (!currentUser) {
     const templateVars = {
       urls: urlDatabase,
@@ -146,23 +149,21 @@ app.post("/login", (req, res) => {
     res.status(403).send("Incorrect password for this account.");
   } else {
 
-    res.cookie("user_id", checkForUser.id);
+    req.session.user_id = checkForUser.id;
     res.redirect(302, "/urls/");
   }
-
-  console.log(users);
 
 });
 
 // LOGOUT:
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null
   res.redirect(302, "/login");
 });
 
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
-  const currentUser = req.cookies.user_id;
+  const currentUser = req.session.user_id;
   const userDatabase = urlsForUser(currentUser);
   if (currentUser) {
     const templateVars = {
@@ -177,7 +178,7 @@ app.get("/urls", (req, res) => {
 
 // SUBMIT NEW URL:
 app.post("/urls", (req, res) => {
-  const currentUser = req.cookies.user_id;
+  const currentUser = req.session.user_id;
   
   if (currentUser) {
     const submittedLongURL = req.body.longURL;
@@ -195,7 +196,6 @@ app.post("/urls", (req, res) => {
     }
 
   } else {
-    console.log(urlDatabase);
     res.status(401).send("Only registered users can shorten URLs.");
   }
 
@@ -203,7 +203,7 @@ app.post("/urls", (req, res) => {
 
 // URL SUBMIT PAGE:
 app.get("/urls/new", (req, res) => {
-  const currentUser = req.cookies.user_id;
+  const currentUser = req.session.user_id;
   if (currentUser) {
     const templateVars = {
       urls: urlDatabase,
@@ -223,7 +223,7 @@ app.get("/urls/:id", (req, res) => {
     res.status(404).send("URL does not exist within database.");
   } else {
 
-    const currentUser = req.cookies.user_id;
+    const currentUser = req.session.user_id;
     const matchingUser = urlDatabase[shortURL].userID;
 
     if (matchingUser === currentUser) {
@@ -274,7 +274,7 @@ app.post("/urls/:id", (req, res) => {
   } else {
 
     const newURL = req.body.newURL;
-    const currentUser = req.cookies.user_id;
+    const currentUser = req.session.user_id;
     const matchingUser = urlDatabase[shortURL].userID;
   
     if (matchingUser === currentUser) {
@@ -302,7 +302,7 @@ app.post("/urls/:id/delete", (req, res) => {
     res.status(404).send("URL does not exist within database.");
   } else {
 
-    const currentUser = req.cookies.user_id;
+    const currentUser = req.session.user_id;
     const matchingUser = urlDatabase[shortURL].userID;
 
     if (matchingUser === currentUser) {
