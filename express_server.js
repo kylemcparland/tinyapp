@@ -3,6 +3,7 @@ const users = database.users;
 const urlDatabase = database.urlDatabase;
 
 const express = require("express");
+const bcrypt = require("bcryptjs");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -103,12 +104,13 @@ app.post("/register", (req, res) => {
     if (getEmailinDatabase(emailInput)) {
       res.status(400).send("Email already exists in database.");
     } else {
+      const hashedPassword = bcrypt.hashSync(passwordInput, 10);
       const assignUserID = generateRandomString();
       users[assignUserID] = {};
     
       users[assignUserID].id = assignUserID;
       users[assignUserID].email = emailInput;
-      users[assignUserID].password = passwordInput;
+      users[assignUserID].password = hashedPassword;
     
       res.cookie("user_id", assignUserID);
     
@@ -140,13 +142,15 @@ app.post("/login", (req, res) => {
 
   if (!checkForUser) {
     res.status(403).send("Email does not exist in database.");
-  } else if (passwordInput !== checkForUser.password) {
+  } else if (!bcrypt.compareSync(passwordInput, checkForUser.password)) {
     res.status(403).send("Incorrect password for this account.");
   } else {
 
     res.cookie("user_id", checkForUser.id);
     res.redirect(302, "/urls/");
   }
+
+  console.log(users);
 
 });
 
@@ -355,3 +359,7 @@ app.listen(PORT, () => {
 // app.set
 
 // You can write RETURN before a redirect
+
+// {heading: req.body[value] || req.body.en}
+
+//on server restart, if a browser has a cookie from a previous iteration of the server, none of the links work
