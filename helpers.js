@@ -14,6 +14,18 @@ const getUserByEmail = function(email, database) {
   return undefined;
 };
 
-const helpers = { getUserByEmail };
+// FUNCTION FOR PARSE URL DATABASE BY USER:
+const urlsForUser = function(id, database) {
+  let userDatabase = {};
+  for (const url in database) {
+    const currentUserID = database[url].userID;
+    if (currentUserID === id) {
+      userDatabase[url] = database[url].longURL;
+    }
+  }
+  return userDatabase;
+}
+
+const helpers = { getUserByEmail, urlsForUser };
 
 module.exports = helpers;

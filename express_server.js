@@ -42,20 +42,6 @@ const generateRandomString = function() {
   return randomString;
 };
 
-
-
-// FUNCTION FOR PARSE URL DATABASE BY USER:
-const urlsForUser = function(id) {
-  let userDatabase = {};
-  for (const url in urlDatabase) {
-    const currentUserID = urlDatabase[url].userID;
-    if (currentUserID === id) {
-      userDatabase[url] = urlDatabase[url].longURL;
-    }
-  }
-  return userDatabase;
-}
-
 // FUNCTION CHECK IF SHORT URL EXISTS:
 const checkDatabaseForURL = function(url) {
   for (const currentURL in urlDatabase) {
@@ -129,7 +115,7 @@ app.get("/login", (req, res) => {
   }
 });
 
-// LOGIN:
+// LOGIN POST:
 app.post("/login", (req, res) => {
   const emailInput = req.body.email;
   const passwordInput = req.body.password;
@@ -147,7 +133,7 @@ app.post("/login", (req, res) => {
 
 });
 
-// LOGOUT:
+// LOGOUT POST:
 app.post("/logout", (req, res) => {
   req.session = null
   res.redirect(302, "/login");
@@ -156,7 +142,7 @@ app.post("/logout", (req, res) => {
 // FULL URLS DATABASE PAGE:
 app.get("/urls", (req, res) => {
   const currentUser = req.session.user_id;
-  const userDatabase = urlsForUser(currentUser);
+  const userDatabase = helpers.urlsForUser(currentUser, urlDatabase);
   if (currentUser) {
     const templateVars = {
       urls: userDatabase,
@@ -359,3 +345,5 @@ app.listen(PORT, () => {
 //strLibrary by using the charCodeAt
 //For example, in your /register route, you could check to see if the email and password fields are not only present, 
 //but also meet certain criteria (e.g., the email is in a valid format, the password is a certain length, etc.).
+
+//You could write more comments for specific lines in the code to aid readability and understandability.
