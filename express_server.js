@@ -339,3 +339,19 @@ app.listen(PORT, () => {
 //handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
 
 // convert email to lowercase on registration
+
+// does generate random string account for existing IDs? 
+// => check for if ID exists before returning
+
+// !tab creates a skeleton on an ejs file
+
+// const {email, password} = req.body;
+// (deconstructing object)
+
+// Check for if logic DOESN'T match first
+
+// //Middleware
+// cookie parser
+// app.set
+
+// You can write RETURN before a redirect
