@@ -18,11 +18,13 @@
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">
-          Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+          Short URL ID: <a href="/u/<%= id %>"><%= id %></a> <br>
+          Total visits: <span style="font-weight: bold;"><%= visitList.length %></span>
+          Unique visitors: <span style="font-weight: bold;"><%= uniqueVisitors %></span>
         </p>
+
       </div>
       <div class="card-footer">
-
         <div class="text-center">
 
             <strong><h4 class="card-title">Edit URL:</h4></strong>
@@ -42,9 +44,16 @@
               </form>
               </div>
             </form>
-
       </div>
+    </div>
 
+    <div class="visits-list">
+      <h5 class="card-title">Visits:</h5>
+      <ul class="list-group">
+        <% visitList.forEach((visit) => { %>
+          <li class="list-group-item">Visitor ID: <%= visit %></li>
+        <% }); %>
+      </ul>
     </div>
 
     <!-- Bootstrap JS -->

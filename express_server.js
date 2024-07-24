@@ -21,7 +21,7 @@ app.use(methodOverride('_method'));
 app.set("view engine", "ejs");
 
 // FUNCTION TO CREATE NEW URLS:
-const generateRandomString = function() {
+const generateRandomString = function () {
   let randomString = "";
   const strLibrary =
     [
@@ -45,7 +45,7 @@ const generateRandomString = function() {
 };
 
 // FUNCTION CHECK IF SHORT URL EXISTS:
-const checkDatabaseForURL = function(url) {
+const checkDatabaseForURL = function (url) {
   for (const currentURL in urlDatabase) {
     if (currentURL === url) {
       return true;
@@ -90,16 +90,16 @@ app.post("/register", (req, res) => {
       const hashedPassword = bcrypt.hashSync(passwordInput, 10);
       const assignUserID = generateRandomString();
       users[assignUserID] = {};
-    
+
       users[assignUserID].id = assignUserID;
       users[assignUserID].email = emailInput;
       users[assignUserID].password = hashedPassword;
-    
+
       req.session.user_id = assignUserID;
-    
+
       res.redirect(302, "/urls/");
     }
-    
+
   }
 });
 
@@ -156,31 +156,6 @@ app.get("/urls", (req, res) => {
   }
 });
 
-// SUBMIT NEW URL:
-app.post("/urls", (req, res) => {
-  const currentUser = req.session.user_id;
-  
-  if (currentUser) {
-    const submittedLongURL = req.body.longURL;
-
-    if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
-      const generatedShortURL = generateRandomString();
-
-      urlDatabase[generatedShortURL] = {};
-      urlDatabase[generatedShortURL].longURL = submittedLongURL;
-      urlDatabase[generatedShortURL].userID = currentUser;
-
-      res.redirect(302, "/urls/" + generatedShortURL);
-    } else {
-      res.send("Invalid URL. Please include 'http://' or 'https://'");
-    }
-
-  } else {
-    res.status(401).send("Only registered users can shorten URLs.");
-  }
-
-});
-
 // URL SUBMIT PAGE:
 app.get("/urls/new", (req, res) => {
   const currentUser = req.session.user_id;
@@ -195,10 +170,37 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+// SUBMIT NEW URL:
+app.post("/urls", (req, res) => {
+  const currentUser = req.session.user_id;
+
+  if (currentUser) {
+    const submittedLongURL = req.body.longURL;
+
+    if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
+      const generatedShortURL = generateRandomString();
+
+      urlDatabase[generatedShortURL] = {};
+      urlDatabase[generatedShortURL].longURL = submittedLongURL;
+      urlDatabase[generatedShortURL].userID = currentUser;
+      urlDatabase[generatedShortURL].uniqueVisitors = [];
+      urlDatabase[generatedShortURL].visitList = [];
+
+      res.redirect(302, "/urls/" + generatedShortURL);
+    } else {
+      res.send("Invalid URL. Please include 'http://' or 'https://'");
+    }
+
+  } else {
+    res.status(401).send("Only registered users can shorten URLs.");
+  }
+
+});
+
 // VIEW URL-SPECIFIC PAGE:
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  
+
   if (!checkDatabaseForURL(shortURL)) {
     res.status(404).send("URL does not exist within database.");
   } else {
@@ -210,10 +212,14 @@ app.get("/urls/:id", (req, res) => {
 
       if (urlDatabase[shortURL]) {
         const longURL = urlDatabase[shortURL].longURL;
+        const visitList = urlDatabase[shortURL].visitList;
+        const uniqueVisitors = urlDatabase[shortURL].uniqueVisitors.length;
         const templateVars = {
           id: shortURL,
           longURL: longURL,
           urls: urlDatabase,
+          uniqueVisitors: uniqueVisitors,
+          visitList: visitList,
           user: users[currentUser]
         };
         res.render("urls_show", templateVars);
@@ -221,7 +227,7 @@ app.get("/urls/:id", (req, res) => {
         res.send("URL does not exist within database.");
         // redundant
       }
-  
+
     } else if (currentUser) {
       res.status(401).send("Current user cannot access this page.");
     } else {
@@ -234,10 +240,28 @@ app.get("/urls/:id", (req, res) => {
 
 // REDIRECT TO URL USING SHORT URL:
 app.get("/u/:id", (req, res) => {
-  const shortURL = req.params.id;
+  const urlDB = urlDatabase[req.params.id];
 
-  if (urlDatabase[shortURL]) {
-    const longURL = urlDatabase[shortURL].longURL;
+  if (urlDB) {
+
+    // Assign unique visitor_id if none already assigned:
+    let visitorID = req.session.visitor_id;
+    if (!visitorID) {
+      req.session.visitor_id = generateRandomString();
+      visitorID = req.session.visitor_id;
+    }
+
+    // Add visitor_id to uniqueVisitors array if not already in there:
+    const visitorDatabase = urlDB.uniqueVisitors;
+    if (!visitorDatabase.includes(visitorID)) {
+      visitorDatabase.push(visitorID);
+    }
+
+    // Track each individual visitor with a timestamp:
+    const urlVisits = urlDB.visitList;
+    urlVisits.push(`${visitorID} - ${new Date()}`);
+
+    const longURL = urlDB.longURL;
     res.redirect(302, longURL);
   } else {
     res.status(401).send("URL does not exist within database.");
@@ -256,7 +280,7 @@ app.put("/urls/:id", (req, res) => {
     const newURL = req.body.newURL;
     const currentUser = req.session.user_id;
     const matchingUser = urlDatabase[shortURL].userID;
-  
+
     if (matchingUser === currentUser) {
       if (newURL.includes("http://") || newURL.includes("https://")) {
         urlDatabase[shortURL].longURL = newURL;
@@ -277,7 +301,6 @@ app.put("/urls/:id", (req, res) => {
 // DELETE FROM DATABASE:
 app.delete("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  console.log(shortURL);
 
   if (!checkDatabaseForURL(shortURL)) {
     res.status(404).send("URL does not exist within database.");
