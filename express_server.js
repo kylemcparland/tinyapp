@@ -194,7 +194,7 @@ app.post("/urls", (req, res) => {
       visitList: []
     };
 
-    return res.redirect(302, "/urls/" + generatedShortURL);
+    return res.redirect(302, "/urls/" + shortURL);
 
   } else {
     return res.send("Invalid URL. Please include 'http://' or 'https://'");
