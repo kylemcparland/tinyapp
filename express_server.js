@@ -1,302 +1,338 @@
-const database = require("./database");
-const users = database.users;
-const urlDatabase = database.urlDatabase;
+// DATABASE + FUNCTIONS:
+const { users, urlDatabase } = require("./database");
+const {
+  generateRandomString,
+  checkDatabaseForURL,
+  getUserByEmail,
+  urlsForUser
+} = require("./helpers");
+const PORT = 8080;
 
+// MIDDLEWARE + FRAMEWORK:
 const express = require("express");
-const bcrypt = require("bcryptjs");
 const cookieSession = require("cookie-session");
-const app = express();
 const methodOverride = require("method-override");
-const PORT = 8080; // default port 8080
+const bcrypt = require("bcryptjs");
 
-const { generateRandomString, checkDatabaseForURL, getUserByEmail, urlsForUser } = require("./helpers");
-
+// APP:
+const app = express();
+app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 app.use(cookieSession({
   name: 'session',
   keys: ["superSecretKey"]
 }));
-app.use(methodOverride('_method'));
 
-app.set("view engine", "ejs");
+/* ------------------------------------------------------- */
 
 
-// HOMEPAGE:
-app.get("/", (req, res) => {
-  res.send("Welcome to the homepage!");
-});
-
-// REGISTER PAGE:
-app.get("/register", (req, res) => {
-  const currentUser = req.session.user_id;
-  if (!currentUser) {
-    const templateVars = {
-      urls: urlDatabase,
-      user: users[currentUser]
-    };
-    res.render("register", templateVars);
-  } else {
-    res.redirect(302, "/urls/");
-  }
-});
-
-// REGISTER POST:
-app.post("/register", (req, res) => {
-  const emailInput = req.body.email;
-  const passwordInput = req.body.password;
-
-  if (!emailInput) {
-    res.status(400).send("Email address field is blank.");
-  } else if (!passwordInput) {
-    res.status(400).send("Password field is blank.");
-  } else {
-
-    if (getUserByEmail(emailInput, users)) {
-      res.status(400).send("Email already exists in database.");
-    } else {
-      const hashedPassword = bcrypt.hashSync(passwordInput, 10);
-      const assignUserID = generateRandomString(6);
-      users[assignUserID] = {};
-
-      users[assignUserID].id = assignUserID;
-      users[assignUserID].email = emailInput.toLowerCase();
-      users[assignUserID].password = hashedPassword;
-
-      req.session.user_id = assignUserID;
-      console.log(users);
-      res.redirect(302, "/urls/");
-    }
-
-  }
-});
-
-// LOGIN PAGE:
-app.get("/login", (req, res) => {
-  const currentUser = req.session.user_id;
-  if (!currentUser) {
-    const templateVars = {
-      urls: urlDatabase,
-      user: users[currentUser]
-    };
-    res.render("login", templateVars);
-  } else {
-    res.redirect(302, "/urls/");
-  }
-});
-
-// LOGIN POST:
-app.post("/login", (req, res) => {
-  const emailInput = req.body.email;
-  const passwordInput = req.body.password;
-  const checkForUser = getUserByEmail(emailInput, users);
-
-  if (!checkForUser) {
-    res.status(403).send("Email does not exist in database.");
-  } else if (!bcrypt.compareSync(passwordInput, checkForUser.password)) {
-    res.status(403).send("Incorrect password for this account.");
-  } else {
-
-    req.session.user_id = checkForUser.id;
-    res.redirect(302, "/urls/");
-  }
-
-});
-
-// LOGOUT POST:
-app.post("/logout", (req, res) => {
-  req.session = null
-  res.redirect(302, "/login");
-});
-
-// FULL URLS DATABASE PAGE:
-app.get("/urls", (req, res) => {
-  const currentUser = req.session.user_id;
-  const userDatabase = urlsForUser(currentUser, urlDatabase);
-  if (currentUser) {
-    const templateVars = {
-      urls: userDatabase,
-      user: users[currentUser]
-    };
-    res.render("urls_index", templateVars);
-  } else {
-    res.status(401).send("You must login before accessing this page.");
-  }
-});
-
-// URL SUBMIT PAGE:
-app.get("/urls/new", (req, res) => {
-  const currentUser = req.session.user_id;
-  if (currentUser) {
-    const templateVars = {
-      urls: urlDatabase,
-      user: users[currentUser]
-    };
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect(302, "/login");
-  }
-});
-
-// SUBMIT NEW URL:
-app.post("/urls", (req, res) => {
-  const currentUser = req.session.user_id;
-
-  if (currentUser) {
-    const submittedLongURL = req.body.longURL;
-
-    if (submittedLongURL.includes("http://") || submittedLongURL.includes("https://")) {
-      const generatedShortURL = generateRandomString(3);
-
-      urlDatabase[generatedShortURL] = {};
-      urlDatabase[generatedShortURL].longURL = submittedLongURL;
-      urlDatabase[generatedShortURL].userID = currentUser;
-      urlDatabase[generatedShortURL].uniqueVisitors = [];
-      urlDatabase[generatedShortURL].visitList = [];
-
-      res.redirect(302, "/urls/" + generatedShortURL);
-    } else {
-      res.send("Invalid URL. Please include 'http://' or 'https://'");
-    }
-
-  } else {
-    res.status(401).send("Only registered users can shorten URLs.");
-  }
-
-});
-
-// VIEW URL-SPECIFIC PAGE:
-app.get("/urls/:id", (req, res) => {
-  const shortURL = req.params.id;
-
-  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
-    res.status(404).send("URL does not exist within database.");
-  } else {
-
-    const currentUser = req.session.user_id;
-    const matchingUser = urlDatabase[shortURL].userID;
-
-    if (matchingUser === currentUser) {
-
-      if (urlDatabase[shortURL]) {
-        const longURL = urlDatabase[shortURL].longURL;
-        const visitList = urlDatabase[shortURL].visitList;
-        const uniqueVisitors = urlDatabase[shortURL].uniqueVisitors.length;
-        const templateVars = {
-          id: shortURL,
-          longURL: longURL,
-          urls: urlDatabase,
-          uniqueVisitors: uniqueVisitors,
-          visitList: visitList,
-          user: users[currentUser]
-        };
-        res.render("urls_show", templateVars);
-      } else {
-        res.send("URL does not exist within database.");
-        // redundant
-      }
-
-    } else if (currentUser) {
-      res.status(401).send("Current user cannot access this page.");
-    } else {
-      res.status(401).send("Please login before attempting to access this page.");
-    }
-
-  }
-
-});
-
-// REDIRECT TO URL USING SHORT URL:
-app.get("/u/:id", (req, res) => {
-  const urlDB = urlDatabase[req.params.id];
-
-  if (urlDB) {
-
-    // Assign unique visitor_id if none already assigned:
-    let visitorID = req.session.visitor_id;
-    if (!visitorID) {
-      req.session.visitor_id = generateRandomString(6);
-      visitorID = req.session.visitor_id;
-    }
-
-    // Add visitor_id to uniqueVisitors array if not already in there:
-    const visitorDatabase = urlDB.uniqueVisitors;
-    if (!visitorDatabase.includes(visitorID)) {
-      visitorDatabase.push(visitorID);
-    }
-
-    // Track each individual visitor with a timestamp:
-    const urlVisits = urlDB.visitList;
-    urlVisits.push(`${visitorID} - ${new Date()}`);
-
-    const longURL = urlDB.longURL;
-    res.redirect(302, longURL);
-  } else {
-    res.status(401).send("URL does not exist within database.");
-  }
-
-});
-
-// EDIT URL IN DATABASE:
-app.put("/urls/:id", (req, res) => {
-  const shortURL = req.params.id;
-
-  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
-    res.status(404).send("URL does not exist within database.");
-  } else {
-
-    const newURL = req.body.newURL;
-    const currentUser = req.session.user_id;
-    const matchingUser = urlDatabase[shortURL].userID;
-
-    if (matchingUser === currentUser) {
-      if (newURL.includes("http://") || newURL.includes("https://")) {
-        urlDatabase[shortURL].longURL = newURL;
-        res.redirect(302, "/urls/");
-      } else {
-        res.send("Invalid URL. Please include 'http://' or 'https://'");
-      }
-    } else if (currentUser) {
-      res.status(401).send("Current user cannot access this page.");
-    } else {
-      res.status(401).send("Please login before attempting to access this page.");
-    }
-
-  }
-
-});
-
-// DELETE FROM DATABASE:
-app.delete("/urls/:id", (req, res) => {
-  const shortURL = req.params.id;
-
-  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
-    res.status(404).send("URL does not exist within database.");
-  } else {
-
-    const currentUser = req.session.user_id;
-    const matchingUser = urlDatabase[shortURL].userID;
-
-    if (matchingUser === currentUser) {
-      delete urlDatabase[shortURL];
-      res.redirect(302, "/urls/");
-    } else if (currentUser) {
-      res.status(401).send("Current user cannot perform this action.");
-    } else {
-      res.status(401).send("Please login before attempting to perform this action.");
-    }
-  }
-
-});
-
-// JSON API REQUEST:
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-// START SERVER:
+// => START SERVER:
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+
+// => HOMEPAGE:
+app.get("/", (req, res) => {
+  return res.redirect(302, "/register");
+});
+
+
+// => REGISTER PAGE:
+app.get("/register", (req, res) => {
+  const currentUser = req.session.user_id;
+
+  // Already logged in. Redirect...
+  if (currentUser) {
+    return res.redirect(302, "/urls/");
+  }
+
+  // Render register page...
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[currentUser]
+  };
+
+  return res.render("register", templateVars);
+});
+
+
+// => REGISTER POST:
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+
+  // Error handling...
+  if (!email) {
+    return res.status(400).send("Email address field is blank.");
+  }
+  if (!password) {
+    return res.status(400).send("Password field is blank.");
+  }
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send("Email already exists in database.");
+  }
+
+  // Success! Generate new user...
+  const assignUserID = generateRandomString(6);
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  users[assignUserID] = {
+    id: assignUserID,
+    email: email.toLowerCase(),
+    password: hashedPassword
+  };
+
+  // Log into new account using encrypted cookie...
+  req.session.user_id = assignUserID;
+  return res.redirect(302, "/urls/");
+});
+
+
+// => LOGIN PAGE:
+app.get("/login", (req, res) => {
+  const currentUser = req.session.user_id;
+
+  // Already logged in. Redirect...
+  if (currentUser) {
+    res.redirect(302, "/urls/");
+  }
+
+  // Render login page...
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[currentUser]
+  };
+
+  res.render("login", templateVars);
+});
+
+
+// => LOGIN POST:
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  const foundUser = getUserByEmail(email, users);
+
+  // Error handling...
+  if (!foundUser) {
+    return res.status(403).send("Email does not exist in database.");
+  }
+  if (!bcrypt.compareSync(password, foundUser.password)) {
+    return res.status(403).send("Incorrect password for this account.");
+  }
+
+  // Success! Log into your account...
+  req.session.user_id = foundUser.id;
+  return res.redirect(302, "/urls/");
+});
+
+
+// => LOGOUT POST:
+app.post("/logout", (req, res) => {
+  req.session = null;
+  return res.redirect(302, "/login");
+});
+
+
+// => URL DATABASE PAGE:
+app.get("/urls", (req, res) => {
+  const currentUser = req.session.user_id;
+  const userDatabase = urlsForUser(currentUser, urlDatabase);
+
+  // Not logged in. Redirect...
+  if (!currentUser) {
+    return res.status(401).send("You must log in before accessing this page.");
+  }
+
+  // Render urls page...
+  const templateVars = {
+    urls: userDatabase,
+    user: users[currentUser]
+  };
+
+  return res.render("urls_index", templateVars);
+});
+
+
+// => URL SUBMIT PAGE:
+app.get("/urls/new", (req, res) => {
+  const currentUser = req.session.user_id;
+
+  // Error handling...
+  if (!currentUser) {
+    return res.redirect(302, "/login");
+  }
+
+  // Render urls/new page...
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[currentUser]
+  };
+
+  return res.render("urls_new", templateVars);
+});
+
+
+// => URL SUBMIT POST:
+app.post("/urls", (req, res) => {
+  const currentUser = req.session.user_id;
+  const longURL = req.body.longURL;
+
+  // Not logged in...
+  if (!currentUser) {
+    return res.status(401).send("Only registered users can shorten URLs.");
+  }
+
+  // Generate URL object and add to database...
+  if (longURL.includes("http://") || longURL.includes("https://")) {
+    const shortURL = generateRandomString(3);
+
+    urlDatabase[shortURL] = {
+      longURL: longURL,
+      userID: currentUser,
+      uniqueVisitors: [],
+      visitList: []
+    };
+
+    return res.redirect(302, "/urls/" + generatedShortURL);
+
+  } else {
+    return res.send("Invalid URL. Please include 'http://' or 'https://'");
+  }
+});
+
+
+// => URL EDIT/VIEW PAGE:
+app.get("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
+
+  // URL not in database...
+  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
+    return res.status(404).send("URL does not exist within database.");
+  }
+
+  const currentUser = req.session.user_id;
+  const matchingUser = urlDatabase[shortURL].userID;
+
+  if (matchingUser === currentUser) {
+
+    if (urlDatabase[shortURL]) {
+      const longURL = urlDatabase[shortURL].longURL;
+      const visitList = urlDatabase[shortURL].visitList;
+      const uniqueVisitors = urlDatabase[shortURL].uniqueVisitors.length;
+      const templateVars = {
+        id: shortURL,
+        longURL: longURL,
+        urls: urlDatabase,
+        uniqueVisitors: uniqueVisitors,
+        visitList: visitList,
+        user: users[currentUser]
+      };
+      res.render("urls_show", templateVars);
+    } else {
+      res.send("URL does not exist within database.");
+      // redundant
+    }
+
+  } else if (currentUser) {
+    res.status(401).send("Current user cannot access this page.");
+  } else {
+    res.status(401).send("Please login before attempting to access this page.");
+  }
+});
+
+
+// => URL EDIT POST (PUT):
+app.put("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
+
+  // URL not in database...
+  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
+    return res.status(404).send("URL does not exist within database.");
+  }
+
+  const newURL = req.body.newURL;
+  const currentUser = req.session.user_id;
+  const matchingUser = urlDatabase[shortURL].userID;
+
+  if (matchingUser === currentUser) {
+    if (newURL.includes("http://") || newURL.includes("https://")) {
+      urlDatabase[shortURL].longURL = newURL;
+      res.redirect(302, "/urls/");
+    } else {
+      res.send("Invalid URL. Please include 'http://' or 'https://'");
+    }
+  } else if (currentUser) {
+    res.status(401).send("Current user cannot access this page.");
+  } else {
+    res.status(401).send("Please login before attempting to access this page.");
+  }
+});
+
+
+// => DELETE URL FROM DATABASE:
+app.delete("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
+
+  // URL not in database...
+  if (!checkDatabaseForURL(shortURL, urlDatabase)) {
+    return res.status(404).send("URL does not exist within database.");
+  }
+
+  const currentUser = req.session.user_id;
+  const matchingUser = urlDatabase[shortURL].userID;
+
+  if (matchingUser === currentUser) {
+    delete urlDatabase[shortURL];
+    return res.redirect(302, "/urls/");
+  } else if (currentUser) {
+    return res.status(401).send("Current user cannot perform this action.");
+  } else {
+    return res.status(401).send("Please login before attempting to perform this action.");
+  }
+});
+
+
+// => URL REDIRECT:
+app.get("/u/:id", (req, res) => {
+  const urlDB = urlDatabase[req.params.id];
+
+  // Incorrect URL...
+  if (!urlDB) {
+    return res.status(401).send("URL does not exist within database.");
+  }
+
+  // Assign unique visitor_id if none already assigned...
+  let visitorID = req.session.visitor_id;
+  if (!visitorID) {
+    req.session.visitor_id = generateRandomString(6);
+    visitorID = req.session.visitor_id;
+  }
+
+  // Add visitor_id to uniqueVisitors array if not already in there...
+  const visitorDB = urlDB.uniqueVisitors;
+  if (!visitorDB.includes(visitorID)) {
+    visitorDB.push(visitorID);
+  }
+
+  // Track each individual visitor with a timestamp...
+  const urlVisits = urlDB.visitList;
+  urlVisits.push(`${visitorID} - ${new Date()}`);
+
+  // Finally, redirect...
+  const longURL = urlDB.longURL;
+  return res.redirect(302, longURL);
+});
+
+
+// JSON API REQUEST:
+app.get("/urls.json", (req, res) => {
+  return res.json(urlDatabase);
+});
+
+
+
+
 
 
 // app.get("/hello", (req, res) => {
