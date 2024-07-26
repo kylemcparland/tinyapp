@@ -13,6 +13,7 @@ const express = require("express");
 const cookieSession = require("cookie-session");
 const methodOverride = require("method-override");
 const bcrypt = require("bcryptjs");
+const salt = bcrypt.genSaltSync(10);
 
 // APP:
 const app = express();
@@ -21,15 +22,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use(cookieSession({
   name: 'session',
-  keys: ["superSecretKey"]
+  keys: ["superSecretKey", "megaSecretKey"]
 }));
 
 /* ------------------------------------------------------- */
 
-
 // => START SERVER:
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp listening on port ${PORT}!`);
 });
 
 
@@ -75,7 +75,7 @@ app.post("/register", (req, res) => {
 
   // Success! Generate new user...
   const assignUserID = generateRandomString(6);
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedPassword = bcrypt.hashSync(password, salt);
 
   users[assignUserID] = {
     id: assignUserID,
@@ -104,7 +104,7 @@ app.get("/login", (req, res) => {
     user: users[currentUser]
   };
 
-  res.render("login", templateVars);
+  return res.render("login", templateVars);
 });
 
 
@@ -195,7 +195,6 @@ app.post("/urls", (req, res) => {
     };
 
     return res.redirect(302, "/urls/" + shortURL);
-
   } else {
     return res.send("Invalid URL. Please include 'http://' or 'https://'");
   }
@@ -205,67 +204,61 @@ app.post("/urls", (req, res) => {
 // => URL EDIT/VIEW PAGE:
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
+  const currentUser = req.session.user_id;
 
-  // URL not in database...
+  // Error handling...
   if (!checkDatabaseForURL(shortURL, urlDatabase)) {
     return res.status(404).send("URL does not exist within database.");
   }
-
-  const currentUser = req.session.user_id;
-  const matchingUser = urlDatabase[shortURL].userID;
-
-  if (matchingUser === currentUser) {
-
-    if (urlDatabase[shortURL]) {
-      const longURL = urlDatabase[shortURL].longURL;
-      const visitList = urlDatabase[shortURL].visitList;
-      const uniqueVisitors = urlDatabase[shortURL].uniqueVisitors.length;
-      const templateVars = {
-        id: shortURL,
-        longURL: longURL,
-        urls: urlDatabase,
-        uniqueVisitors: uniqueVisitors,
-        visitList: visitList,
-        user: users[currentUser]
-      };
-      res.render("urls_show", templateVars);
-    } else {
-      res.send("URL does not exist within database.");
-      // redundant
-    }
-
-  } else if (currentUser) {
-    res.status(401).send("Current user cannot access this page.");
-  } else {
-    res.status(401).send("Please login before attempting to access this page.");
+  if (!currentUser) {
+    return res.status(401).send("Please login before attempting to access this page.");
   }
+
+  const compareUser = urlDatabase[shortURL].userID;
+  if (compareUser !== currentUser) {
+    return res.status(401).send("Current user cannot access this page.");
+  }
+
+  // Success! Render urls/:id page...
+  const { longURL, visitList, uniqueVisitors } = urlDatabase[shortURL];
+  const templateVars = {
+    id: shortURL,
+    longURL,
+    urls: urlDatabase,
+    uniqueVisitors: uniqueVisitors.length,
+    visitList,
+    user: users[currentUser]
+  };
+
+  return res.render("urls_show", templateVars);
 });
 
 
 // => URL EDIT POST (PUT):
 app.put("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
+  const currentUser = req.session.user_id;
+  const newURL = req.body.newURL;
 
-  // URL not in database...
+  // Error handling...
   if (!checkDatabaseForURL(shortURL, urlDatabase)) {
     return res.status(404).send("URL does not exist within database.");
   }
+  if (!currentUser) {
+    return res.status(401).send("Please login before attempting to access this page.");
+  }
 
-  const newURL = req.body.newURL;
-  const currentUser = req.session.user_id;
-  const matchingUser = urlDatabase[shortURL].userID;
+  const compareUser = urlDatabase[shortURL].userID;
+  if (compareUser !== currentUser) {
+    return res.status(401).send("Current user cannot access this page.");
+  }
 
-  if (matchingUser === currentUser) {
-    if (newURL.includes("http://") || newURL.includes("https://")) {
-      urlDatabase[shortURL].longURL = newURL;
-      res.redirect(302, "/urls/");
-    } else {
-      res.send("Invalid URL. Please include 'http://' or 'https://'");
-    }
-  } else if (currentUser) {
-    res.status(401).send("Current user cannot access this page.");
+  // Success! Edit url...
+  if (newURL.includes("http://") || newURL.includes("https://")) {
+    urlDatabase[shortURL].longURL = newURL;
+    return res.redirect(302, "/urls/");
   } else {
-    res.status(401).send("Please login before attempting to access this page.");
+    return res.send("Invalid URL. Please include 'http://' or 'https://'");
   }
 });
 
@@ -273,23 +266,24 @@ app.put("/urls/:id", (req, res) => {
 // => DELETE URL FROM DATABASE:
 app.delete("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
+  const currentUser = req.session.user_id;
 
-  // URL not in database...
+  // Error handling...
   if (!checkDatabaseForURL(shortURL, urlDatabase)) {
     return res.status(404).send("URL does not exist within database.");
   }
-
-  const currentUser = req.session.user_id;
-  const matchingUser = urlDatabase[shortURL].userID;
-
-  if (matchingUser === currentUser) {
-    delete urlDatabase[shortURL];
-    return res.redirect(302, "/urls/");
-  } else if (currentUser) {
-    return res.status(401).send("Current user cannot perform this action.");
-  } else {
+  if (!currentUser) {
     return res.status(401).send("Please login before attempting to perform this action.");
   }
+
+  const compareUser = urlDatabase[shortURL].userID;
+  if (compareUser !== currentUser) {
+    return res.status(401).send("Current user cannot perform this action.");
+  }
+
+  // Success! Delete url...
+  delete urlDatabase[shortURL];
+  return res.redirect(302, "/urls/");
 });
 
 
@@ -331,36 +325,10 @@ app.get("/urls.json", (req, res) => {
 });
 
 
-
-
-
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
-
-
-// Edge cases:
-//localhost:8080/urls/RANDOMSTRING => Shouldn't bring up a urls page
-//localhost:8080/u/RANDOMSTRING => Shouldn't throw an error, it should return info
-
 //handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
 
 // does generate random string account for existing IDs? 
 // => check for if ID exists before returning
-
-// const {email, password} = req.body;
-// (deconstructing object)
-
-// Check for if logic DOESN'T match first
-
-// //Middleware
-// cookie parser
-// app.set
-
-// You can write RETURN before a redirect
-
-// {heading: req.body[value] || req.body.en}
 
 //on server restart, if a browser has a cookie from a previous iteration of the server, none of the links work
 
