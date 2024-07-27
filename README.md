@@ -33,12 +33,11 @@ npm start
 ...
 "TinyApp listening on port 8080!"
 ```
-- Connect locally using [localhost:8080/](localhost:8080/)
+- Connect locally using "localhost:8080" in your browser! _(Or customize the host using the PORT variable stored in express_server.js)_
 
 ## Final Product
 
-_Initializing..._
-![Screenshot](https://i.ibb.co/Yt8f8gm/screenshot1-tinyapp.png "Screenshot")
+![Screenshot](https://i.ibb.co/gZVfS93/screenshot1-tinyapp.png "Screenshot")
 _Create your own account! Don't worry, your data is protected using bcryptjs + cookie-session!_
 ![Screenshot](https://i.ibb.co/NsC5WjZ/screenshot2-tinyapp.png "Screenshot")
 _Submit your own URLs to be shortened down to a THREE character ID!_
