@@ -6,7 +6,6 @@ const {
   getUserByEmail,
   urlsForUser
 } = require("./helpers");
-const PORT = 8080;
 
 // MIDDLEWARE + FRAMEWORK:
 const express = require("express");
@@ -17,6 +16,7 @@ const salt = bcrypt.genSaltSync(10);
 
 // APP:
 const app = express();
+const PORT = 8080;
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
@@ -95,7 +95,7 @@ app.get("/login", (req, res) => {
 
   // Already logged in. Redirect...
   if (currentUser) {
-    res.redirect(302, "/urls/");
+    return res.redirect(302, "/urls/");
   }
 
   // Render login page...
@@ -296,7 +296,7 @@ app.get("/u/:id", (req, res) => {
     return res.status(401).send("URL does not exist within database.");
   }
 
-  // Assign unique visitor_id if none already assigned...
+  // Assign unique visitor_id cookie if none already assigned...
   let visitorID = req.session.visitor_id;
   if (!visitorID) {
     req.session.visitor_id = generateRandomString(6);
@@ -323,17 +323,3 @@ app.get("/u/:id", (req, res) => {
 app.get("/urls.json", (req, res) => {
   return res.json(urlDatabase);
 });
-
-
-//handle url already existing in database (recursion?) if (!urlDatabase[generatedShortURL]) { continue }
-
-// does generate random string account for existing IDs? 
-// => check for if ID exists before returning
-
-//on server restart, if a browser has a cookie from a previous iteration of the server, none of the links work
-
-//strLibrary by using the charCodeAt
-//For example, in your /register route, you could check to see if the email and password fields are not only present, 
-//but also meet certain criteria (e.g., the email is in a valid format, the password is a certain length, etc.).
-
-//You could write more comments for specific lines in the code to aid readability and understandability.

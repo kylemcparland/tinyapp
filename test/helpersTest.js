@@ -1,6 +1,6 @@
 const { assert } = require("chai");
 
-const { getUserByEmail, urlsForUser } = require("../helpers.js");
+const { getUserByEmail, urlsForUser, checkDatabaseForURL, generateRandomString } = require("../helpers.js");
 
 const testUsers = {
   "userRandomID": {
@@ -63,5 +63,49 @@ describe("Testing helper functions: urlsForUser", () => {
     const user = "aJ48lW";
     const expected = {};
     assert.deepEqual(urlsForUser(user, emptyDatabase), expected);
+  });
+});
+
+// checkDatabaseForURL tests:
+describe("Testing helper functions: checkDatabaseForURL", () => {
+  it("should return true if URL is found in database", () => {
+    const shortURL = "b6UTxQ";
+    const expected = true;
+    assert.deepEqual(checkDatabaseForURL(shortURL, testDatabase), expected);
+  });
+  it("should return false if URL is not found in database", () => {
+    const shortURL = "fkEuRl";
+    const expected = false;
+    assert.deepEqual(checkDatabaseForURL(shortURL, testDatabase), expected);
+  });
+  it("should return false if URL is not a string", () => {
+    const shortURL = 333777;
+    const expected = false;
+    assert.deepEqual(checkDatabaseForURL(shortURL, testDatabase), expected);
+  });
+  it("should return false if URL is an empty string", () => {
+    const shortURL = "";
+    const expected = false;
+    assert.deepEqual(checkDatabaseForURL(shortURL, testDatabase), expected);
+  });
+});
+
+// generateRandomString tests:
+describe("Testing helper functions: generateRandomString", () => {
+  it("should return a 6 character string if given an argument of 6", () => {
+    const testLength = generateRandomString(6).length
+    assert.deepEqual(testLength, 6);
+  });
+  it("should return a 1 character string if given an argument of 1", () => {
+    const testLength = generateRandomString(1).length
+    assert.deepEqual(testLength, 1);
+  });
+  it("should return a 0 character string if given an argument of 0", () => {
+    const testLength = generateRandomString(0).length
+    assert.deepEqual(testLength, 0);
+  });
+  it("should return a 0 character string if given an argument of -1", () => {
+    const testLength = generateRandomString(-1).length
+    assert.deepEqual(testLength, 0);
   });
 });
