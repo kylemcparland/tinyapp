@@ -1,24 +1,26 @@
-# TinyApp - By: Kyle McParland (Lighthouse Labs 2024)
+# TinyApp Project - By: Kyle McParland (Lighthouse Labs 2024)
 
-This is a simple multi-page app with the following features:
+TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly).
+
+This simple multi-page app has the following feature highlights:
 1. **Account registry** [ User logins, personal user databases ]
 2. **Authentication protection** [ Hashed passwords, encrypted cookies ] 
 3. **Server client** [ Express ]
-4. **CRUD simple entities** [ Custom URL shortening function: submit URLs + edit them from your protected database / delete ]
+4. **CRUD simple entities** [ Custom URL shortening function: submit URLs + edit/delete them from your protected database ]
 5. **Pages displayed with HTML** [ ejs ]
 
 Server hosted locally on ***PORT 8080*** using express!
 
 ## Installation
 
-- Clone **[TinyApp]** using the SSH key in the git repo into an empty directory:
+- Clone **[TinyApp]** using the SSH key in the git repo:
 
 ```bash
 git clone git@github.com:kylemcparland/tinyapp.git
 cd tinyapp/
 ```
 
-- Install dependencies using _npm install_ ( full list documented on bottom of README.md )
+- Install dependencies using _npm install_ ( full list documented on bottom of README.md ):
 
 ```bash
 npm install
@@ -27,13 +29,13 @@ npm install
 _--- => Installation complete!_
 
 ## How to use
-- Initialize server using _npm start_
+- Initialize the development web server using `npm start` or simply the `node express_server.js` command.
 ```bash
 npm start
 ...
 "TinyApp listening on port 8080!"
 ```
-- Connect locally using "localhost:8080" in your browser! _(Or customize the host using the PORT variable stored in express_server.js)_
+- Connect locally using "localhost:8080" in your browser! _(Or customize the host using the PORT variable stored in express_server.js):_
 
 ## Final Product
 
@@ -45,16 +47,18 @@ _Submit your own URLs to be shortened down to a THREE character ID!_
 _Customize your URLs and keep track of all your visits (unique or otherwise)!_
 ![Screenshot](https://i.ibb.co/FH8RCKn/screenshot4-tinyapp.png "Screenshot")
 
-## Acknowledgements
+## Dependencies + Acknowledgements
 This project would not be possible without the following amazing libraries:
+
+[Node.js](https://nodejs.org/en/download/package-manager)
+
+[express](https://www.npmjs.com/package/express) "^4.19.2"
+
+[ejs](https://www.npmjs.com/package/ejs) "^3.1.10"
 
 [bcryptjs](https://www.npmjs.com/package/bcryptjs) "^2.4.3"
 
 [cookie-session](https://www.npmjs.com/package/cookie-session) "^2.1.0"
-
-[ejs](https://www.npmjs.com/package/ejs) "^3.1.10"
-
-[express](https://www.npmjs.com/package/express) "^4.19.2"
 
 [method-override](https://www.npmjs.com/package/method-override) "^3.0.0"
 
