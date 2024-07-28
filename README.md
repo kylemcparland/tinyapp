@@ -39,13 +39,13 @@ npm start
 
 ## Final Product
 
-![Screenshot](https://i.ibb.co/gZVfS93/screenshot1-tinyapp.png "Screenshot")
+![Screenshot](https://raw.githubusercontent.com/kylemcparland/tinyapp/main/docs/tinyapp-terminal.png "Screenshot of terminal")
 _Create your own account! Don't worry, your data is protected using bcryptjs + cookie-session!_
-![Screenshot](https://i.ibb.co/NsC5WjZ/screenshot2-tinyapp.png "Screenshot")
+![Screenshot](https://raw.githubusercontent.com/kylemcparland/tinyapp/main/docs/tinyapp-register.png "Screenshot of account creation")
 _Submit your own URLs to be shortened down to a THREE character ID!_
-![Screenshot](https://i.ibb.co/5khy1MD/screenshot3-tinyapp.png "Screenshot")
+![Screenshot](https://raw.githubusercontent.com/kylemcparland/tinyapp/main/docs/tinyapp-createurl.png "Screenshot of URL submission")
 _Customize your URLs and keep track of all your visits (unique or otherwise)!_
-![Screenshot](https://i.ibb.co/FH8RCKn/screenshot4-tinyapp.png "Screenshot")
+![Screenshot](https://raw.githubusercontent.com/kylemcparland/tinyapp/main/docs/tinyapp-editpage.png "Screenshot of edit/delete page")
 
 ## Dependencies + Acknowledgements
 This project would not be possible without the following amazing libraries:
