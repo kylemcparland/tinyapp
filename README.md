@@ -20,7 +20,7 @@ git clone git@github.com:kylemcparland/tinyapp.git
 cd tinyapp/
 ```
 
-- Install dependencies using _npm install_ ( full list documented on bottom of README.md ):
+- Install dependencies using `npm install` ( full list documented on bottom of README.md ):
 
 ```bash
 npm install
